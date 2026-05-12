@@ -82,7 +82,7 @@ function recordResult(won, attempts, word, length) {
 function getWonCounts() {
   const all = _readJSON(WON_KEY, {});
   const out = {};
-  for (const k of ["6","7","8","9"]) {
+  for (const k of ["5","6","7","8","9"]) {
     out[k] = Array.isArray(all[k]) ? all[k].length : 0;
   }
   return out;

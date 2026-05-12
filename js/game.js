@@ -122,6 +122,11 @@ function submitGuess() {
     toast("Lettres invalides");
     return;
   }
+  if (window.MotusDict && !window.MotusDict.isValidGuess(guess)) {
+    shakeRow();
+    toast("Mot inconnu");
+    return;
+  }
   const result = evaluateGuess(guess, state.target);
   const tiles = state.rows[state.currentRow].tiles;
   const letterStates = {};
@@ -274,7 +279,7 @@ function openStats() {
   }
   const wd = $("#stWords");
   wd.innerHTML = "";
-  for (const k of ["6","7","8","9"]) {
+  for (const k of ["5","6","7","8","9"]) {
     const total = window.MotusWords.WORDS[k].length;
     const div = document.createElement("div");
     div.className = "won-line";
