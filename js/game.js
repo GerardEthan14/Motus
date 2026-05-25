@@ -130,6 +130,7 @@ function submitGuess() {
   const result = evaluateGuess(guess, state.target);
   const tiles = state.rows[state.currentRow].tiles;
   const letterStates = {};
+  const RANK = { absent: 1, present: 2, correct: 3 };
 
   for (let i = 0; i < tiles.length; i++) {
     const tile = tiles[i];
@@ -142,7 +143,8 @@ function submitGuess() {
         spawnParticlesAt(tile, stColor(st), st === "correct" ? 10 : st === "present" ? 6 : 2);
       }, 180);
     }, i * FLIP_DELAY_MS);
-    letterStates[guess[i]] = result[i];
+    const prev = letterStates[guess[i]];
+    if (!prev || RANK[st] > RANK[prev]) letterStates[guess[i]] = st;
   }
 
   const totalDelay = tiles.length * FLIP_DELAY_MS + 350;
