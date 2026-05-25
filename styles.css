@@ -14,7 +14,7 @@
   --play-w: min(96vw, 480px);
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; touch-action: manipulation; }
 
 html, body {
   margin: 0;
@@ -26,6 +26,10 @@ html, body {
   overflow-x: hidden;
   min-height: 100vh;
   image-rendering: pixelated;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body::before {
@@ -126,6 +130,7 @@ body.victory h1.title {
   transition: transform 80ms, box-shadow 120ms, background 120ms, color 120ms;
   box-shadow: 0 0 0 0 transparent;
   text-transform: uppercase;
+  touch-action: manipulation;
 }
 
 .btn:hover {
@@ -319,6 +324,7 @@ main {
   font-family: inherit;
   font-size: clamp(10px, 3.4vw, 13px);
   cursor: pointer;
+  touch-action: manipulation;
   transition: transform 70ms, background 100ms, color 100ms, box-shadow 100ms;
 }
 
