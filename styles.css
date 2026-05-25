@@ -1025,3 +1025,103 @@ body.on-fire::after {
   .cg-head, .cg-row { grid-template-columns: 78px repeat(var(--cg-cols), 66px); }
   .cg-cell { min-height: 58px; }
 }
+
+/* ===================== LoLdle ===================== */
+.hub-tile.lol .hub-emoji { color: var(--neon-pink); }
+.hub-tile.lol:hover { border-color: var(--neon-pink); box-shadow: 0 0 16px var(--neon-pink); }
+
+.lol-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.lol-nav button {
+  font-family: inherit;
+  font-size: 9px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 3px solid var(--border);
+  padding: 8px 9px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: transform 80ms, box-shadow 120ms, color 120ms, border-color 120ms;
+}
+.lol-nav button:hover { color: var(--neon-pink); border-color: var(--neon-pink); }
+.lol-nav button.active {
+  color: #000;
+  background: var(--neon-pink);
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 10px var(--neon-pink);
+}
+
+/* indice media */
+.mg-clue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  margin-bottom: 4px;
+}
+.mg-hint { font-size: 8px; color: var(--neon-blue); text-align: center; margin: 0 0 6px; line-height: 1.5; }
+
+.lol-splash {
+  width: 100%;
+  height: 240px;
+  background-repeat: no-repeat;
+  border: 3px solid var(--border);
+  image-rendering: auto;
+  transition: background-size 500ms ease, background-position 500ms ease;
+}
+.lol-splash.solved { background-size: cover; background-position: center top; border-color: var(--neon-green); }
+
+.lol-abilities { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.lol-abilities img {
+  width: 72px; height: 72px;
+  border: 3px solid var(--border);
+  background: #000;
+  image-rendering: auto;
+}
+.lol-abilities img.passive { border-color: var(--neon-yellow); border-radius: 50%; }
+
+.lol-emojis { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 40px; line-height: 1; }
+.lol-emojis span { animation: cg-reveal 360ms ease-out both; }
+
+.lol-quote {
+  font-family: "Courier New", monospace;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--ink);
+  text-align: center;
+  padding: 18px 16px;
+  border: 3px solid var(--border);
+  background: var(--bg2);
+  line-height: 1.5;
+  max-width: 540px;
+}
+
+/* cartes des essais (media) */
+.mg-guesses { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.mg-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 3px solid #15151c;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: bold;
+}
+.mg-card img { width: 44px; height: 44px; image-rendering: auto; }
+.mg-card.wrong { background: #c0392b; color: #fff; }
+.mg-card.correct { background: var(--neon-green); color: #021000; }
+.mg-card.reveal { animation: cg-reveal 380ms ease-out both; }
+
+@media (max-width: 540px) {
+  .lol-splash { height: 200px; }
+  .lol-abilities img { width: 58px; height: 58px; }
+  .lol-emojis { font-size: 32px; }
+  .lol-quote { font-size: 15px; }
+}

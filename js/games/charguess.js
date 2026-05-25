@@ -36,6 +36,8 @@
   function CharGuess(cfg) {
     const mount = document.querySelector(cfg.mount);
     if (!mount) return;
+    if (window.__activeGuess && window.__activeGuess.destroy) window.__activeGuess.destroy();
+    const cleanups = [];
     const entities = cfg.entities;
     const byId = {};
     entities.forEach(function (e) { byId[e[cfg.idKey]] = e; });
@@ -279,9 +281,12 @@
       items.forEach(function (it, i) { it.classList.toggle("active", i === acIndex); });
       if (items[acIndex]) items[acIndex].scrollIntoView({ block: "nearest" });
     }
-    document.addEventListener("pointerdown", function (e) {
-      if (!mount.querySelector(".cg-search-wrap").contains(e.target)) el.dropdown.hidden = true;
-    });
+    function onDocDown(e) {
+      const wrap = mount.querySelector(".cg-search-wrap");
+      if (wrap && !wrap.contains(e.target)) el.dropdown.hidden = true;
+    }
+    document.addEventListener("pointerdown", onDocDown);
+    cleanups.push(function () { document.removeEventListener("pointerdown", onDocDown); });
 
     // ---------- modes ----------
     function pickDaily() {
@@ -405,6 +410,8 @@
     el.modal.addEventListener("click", function (e) {
       if (e.target === el.modal) el.modal.hidden = true;
     });
+
+    window.__activeGuess = { destroy: function () { cleanups.forEach(function (f) { f(); }); } };
 
     startDaily();
   }
