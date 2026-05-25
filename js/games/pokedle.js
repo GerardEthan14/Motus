@@ -19,7 +19,7 @@
           { key: "type1", label: "Type 1", kind: "exact", group: "types" },
           { key: "type2", label: "Type 2", kind: "exact", group: "types", empty: "Aucun" },
           { key: "color", label: "Couleur", kind: "exact" },
-          { key: "habitat", label: "Habitat", kind: "exact" },
+          { key: "shape", label: "Forme", kind: "exact" },
           { key: "stage", label: "Evolution", kind: "numeric" },
           { key: "gen", label: "Gen", kind: "numeric" },
           { key: "heightM", label: "Taille", kind: "numeric", unit: " m" },

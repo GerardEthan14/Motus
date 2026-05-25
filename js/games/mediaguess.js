@@ -1,5 +1,6 @@
 // Moteur "devine le personnage a partir d'un indice media" (splash, icone, emoji, citation).
 // Les mauvaises reponses s'affichent en cartes rouges ; l'indice se devoile a chaque essai.
+// Supporte une 2e phase optionnelle (cfg.phase2), ex. choisir le skin une fois le champion trouve.
 (function () {
   "use strict";
 
@@ -24,12 +25,12 @@
     if (window.__activeGuess && window.__activeGuess.destroy) window.__activeGuess.destroy();
     const cleanups = [];
 
-    const all = cfg.champions;           // liste complete (pour l'autocompletion)
-    const pool = cfg.pool || all;        // reponses possibles
+    const all = cfg.champions;
+    const pool = cfg.pool || all;
     const byId = {};
     all.forEach(function (c) { byId[c[cfg.idKey]] = c; });
 
-    const state = { mode: "daily", target: null, guesses: [], solved: false };
+    const state = { mode: "daily", target: null, guesses: [], solved: false, championFound: false, variant: null };
 
     mount.innerHTML =
       '<div class="cg-modes">' +
@@ -44,6 +45,7 @@
         '<input class="cg-search" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Tape un champion..." />' +
         '<div class="cg-dropdown" hidden></div>' +
       '</div>' +
+      '<div class="mg-phase2" hidden></div>' +
       '<div class="mg-guesses"></div>' +
       '<div class="cg-modal" hidden><div class="cg-modal-card">' +
         '<div class="cg-modal-img"></div>' +
@@ -58,8 +60,10 @@
       clue: mount.querySelector(".mg-clue"),
       tries: mount.querySelector(".cg-tries"),
       hint: mount.querySelector(".cg-status .cg-hint"),
+      searchWrap: mount.querySelector(".cg-search-wrap"),
       search: mount.querySelector(".cg-search"),
       dropdown: mount.querySelector(".cg-dropdown"),
+      phase2: mount.querySelector(".mg-phase2"),
       guesses: mount.querySelector(".mg-guesses"),
       modal: mount.querySelector(".cg-modal"),
       modalImg: mount.querySelector(".cg-modal-img"),
@@ -68,11 +72,9 @@
       again: mount.querySelector(".cg-again")
     };
 
-    function wrongCount() { return state.guesses.length - (state.solved ? 1 : 0); }
-
-    function renderClue() {
-      el.clue.innerHTML = cfg.renderClue(state.target, wrongCount(), state.solved);
-    }
+    const revealFull = function () { return state.solved || state.championFound; };
+    function wrongCount() { return state.guesses.length - (revealFull() ? 1 : 0); }
+    function renderClue() { el.clue.innerHTML = cfg.renderClue(state.target, wrongCount(), revealFull(), state.variant); }
 
     function updateStatus() {
       const n = state.guesses.length;
@@ -84,7 +86,6 @@
       el.guesses.innerHTML = "";
       state.guesses.forEach(function (id) { addCard(byId[id], false); });
     }
-
     function addCard(c, animate) {
       const correct = c[cfg.idKey] === state.target[cfg.idKey];
       const card = document.createElement("div");
@@ -96,26 +97,69 @@
     }
 
     function makeGuess(c) {
-      if (state.solved || !c) return;
+      if (state.solved || state.championFound || !c) return;
       if (state.guesses.indexOf(c[cfg.idKey]) !== -1) { flashSearch(); return; }
       const correct = c[cfg.idKey] === state.target[cfg.idKey];
       state.guesses.push(c[cfg.idKey]);
-      if (correct) state.solved = true;
       addCard(c, true);
-      renderClue();
-      updateStatus();
+      if (correct) {
+        if (cfg.phase2) {
+          state.championFound = true;
+          renderClue(); updateStatus();
+          if (state.mode === "daily") persistDaily();
+          enterPhase2();
+          return;
+        }
+        state.solved = true;
+        renderClue(); updateStatus();
+        if (state.mode === "daily") persistDaily();
+        onWin();
+        return;
+      }
+      renderClue(); updateStatus();
       if (state.mode === "daily") persistDaily();
-      if (correct) onWin();
+    }
+
+    // ---------- phase 2 (ex. choix du skin) ----------
+    function enterPhase2() {
+      el.searchWrap.style.display = "none";
+      const opts = cfg.phase2.options(state.target);
+      el.phase2.innerHTML = '<p class="mg-p2-prompt">' + cfg.phase2.prompt + "</p>" +
+        '<div class="mg-skins">' +
+        opts.map(function (o) { return '<button type="button" class="mg-skin" data-id="' + o.id + '">' + o.label + "</button>"; }).join("") +
+        "</div>";
+      el.phase2.hidden = false;
+    }
+    function markSolvedSkin() {
+      const id = cfg.phase2.correctId(state.target, state.variant);
+      const b = el.phase2.querySelector('.mg-skin[data-id="' + id + '"]');
+      if (b) b.classList.add("correct");
+    }
+    if (cfg.phase2) {
+      el.phase2.addEventListener("click", function (ev) {
+        const b = ev.target.closest(".mg-skin");
+        if (!b || state.solved || b.disabled) return;
+        const id = parseInt(b.dataset.id, 10);
+        if (id === cfg.phase2.correctId(state.target, state.variant)) {
+          b.classList.add("correct");
+          state.solved = true;
+          renderClue();
+          if (state.mode === "daily") persistDaily();
+          onWin();
+        } else {
+          b.classList.add("wrong"); b.disabled = true;
+          state.skinMisses = (state.skinMisses || 0) + 1;
+          if (state.mode === "daily") persistDaily();
+        }
+      });
     }
 
     function onWin() {
       el.search.disabled = true;
-      el.search.placeholder = "Trouve !";
       burst();
       recordWin(state.guesses.length);
       setTimeout(function () { showModal(state.guesses.length); }, 700);
     }
-
     function showModal(tries) {
       const t = state.target;
       el.modalImg.innerHTML = cfg.thumb ? '<img src="' + cfg.thumb(t) + '" alt="" />' : "";
@@ -156,11 +200,9 @@
       makeGuess(c);
       el.search.value = "";
       el.dropdown.hidden = true;
-      if (!state.solved) el.search.focus();
+      if (!revealFull()) el.search.focus();
     }
-    function flashSearch() {
-      el.search.classList.remove("shake"); void el.search.offsetWidth; el.search.classList.add("shake");
-    }
+    function flashSearch() { el.search.classList.remove("shake"); void el.search.offsetWidth; el.search.classList.add("shake"); }
     el.dropdown.addEventListener("click", function (ev) {
       const item = ev.target.closest(".cg-ac-item");
       if (!item) return;
@@ -191,29 +233,42 @@
     function pickDaily() { return pool[hashStr(cfg.key + "|" + todayKey()) % pool.length]; }
     function pickRandom() { return pool[Math.floor(Math.random() * pool.length)]; }
     function persistDaily() {
-      writeJSON("cg." + cfg.key + ".daily", { date: todayKey(), targetId: state.target[cfg.idKey], guesses: state.guesses, solved: state.solved });
+      writeJSON("cg." + cfg.key + ".daily", {
+        date: todayKey(), targetId: state.target[cfg.idKey], variant: state.variant,
+        guesses: state.guesses, championFound: state.championFound, solved: state.solved
+      });
     }
     function startDaily() {
       state.mode = "daily";
       const saved = readJSON("cg." + cfg.key + ".daily", null);
       state.target = pickDaily();
+      const seed = hashStr(cfg.key + "|" + todayKey() + "|v");
+      state.variant = cfg.pickVariant ? cfg.pickVariant(state.target, seed) : null;
+      state.championFound = false; state.solved = false; state.guesses = [];
       if (saved && saved.date === todayKey() && saved.targetId === state.target[cfg.idKey]) {
         state.guesses = (saved.guesses || []).filter(function (id) { return byId[id]; });
+        if (saved.variant != null) state.variant = saved.variant;
+        state.championFound = !!saved.championFound || !!saved.solved;
         state.solved = !!saved.solved;
-      } else { state.guesses = []; state.solved = false; }
+      }
       resetUI();
       renderGuesses(); renderClue(); updateStatus();
-      if (state.solved) { el.search.disabled = true; el.search.placeholder = "Defi resolu — demain !"; }
+      if (cfg.phase2 && state.championFound) { enterPhase2(); if (state.solved) markSolvedSkin(); }
+      if (revealFull()) { el.search.disabled = true; }
+      if (state.solved && !cfg.phase2) el.search.placeholder = "Defi resolu — demain !";
     }
     function startTraining() {
       state.mode = "training";
-      state.target = pickRandom(); state.guesses = []; state.solved = false;
+      state.target = pickRandom();
+      state.variant = cfg.pickVariant ? cfg.pickVariant(state.target, Math.floor(Math.random() * 1e9)) : null;
+      state.guesses = []; state.solved = false; state.championFound = false;
       resetUI();
       el.guesses.innerHTML = ""; renderClue(); updateStatus();
     }
     function resetUI() {
       el.modal.hidden = true; el.search.disabled = false; el.search.value = "";
       el.search.placeholder = "Tape un champion..."; el.dropdown.hidden = true;
+      el.phase2.hidden = true; el.phase2.innerHTML = ""; el.searchWrap.style.display = "";
     }
 
     // ---------- stats ----------
