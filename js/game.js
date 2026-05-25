@@ -173,23 +173,96 @@ function onWin() {
     setTimeout(() => t.classList.add("glow"), i * 80);
   });
   document.body.classList.add("victory");
-  burstParticles(60);
   const attempts = state.currentRow + 1;
-  window.MotusStats.recordResult(true, attempts, state.target, state.length);
+  const s = window.MotusStats.recordResult(true, attempts, state.target, state.length);
+  const streak = s.currentStreak;
+  updateStreakHud(streak, { pop: true });
+
+  const milestone = streak > 0 && streak % 10 === 0;
+  if (milestone) {
+    flashScreen("rgba(255,106,0,0.85)");
+    shockwave();
+    burstParticles(150);
+    const app = document.querySelector(".app");
+    app.classList.add("screen-shake");
+    setTimeout(() => app.classList.remove("screen-shake"), 700);
+    showCombo("EN FEU !  x" + streak, "milestone");
+  } else {
+    burstParticles(50 + Math.min(streak, 12) * 9);
+    if (streak >= 2) showCombo("SERIE  x" + streak, "");
+  }
   setTimeout(() => {
     showEndModal(true, state.target, attempts);
-  }, 1300);
+  }, milestone ? 1900 : 1300);
 }
 
 function onLose() {
   state.finished = true;
+  const prevStreak = window.MotusStats.getStats().currentStreak;
   document.body.classList.add("defeat");
-  document.querySelector(".app").classList.add("screen-shake");
-  setTimeout(() => document.querySelector(".app").classList.remove("screen-shake"), 700);
+  document.body.classList.remove("on-fire");
+  const app = document.querySelector(".app");
+  app.classList.add("screen-shake");
+  setTimeout(() => app.classList.remove("screen-shake"), 700);
+  flashScreen("rgba(255,40,60,0.6)");
   window.MotusStats.recordResult(false, 0, state.target, state.length);
+  updateStreakHud(0, { broke: prevStreak >= 1 });
+  if (prevStreak >= 3) {
+    showCombo("SERIE PERDUE !  x" + prevStreak, "broken");
+  }
   setTimeout(() => {
     showEndModal(false, state.target, MAX_ATTEMPTS);
-  }, 800);
+  }, 900);
+}
+
+function updateStreakHud(value, opts) {
+  const hud = $("#streakHud");
+  const val = $("#streakValue");
+  if (!hud || !val) return;
+  val.textContent = value;
+  hud.classList.toggle("active", value > 0);
+  document.body.classList.toggle("on-fire", value >= 10);
+  if (opts && opts.pop) {
+    hud.classList.remove("pop");
+    void hud.offsetWidth;
+    hud.classList.add("pop");
+  }
+  if (opts && opts.broke) {
+    hud.classList.remove("broke");
+    void hud.offsetWidth;
+    hud.classList.add("broke");
+  }
+}
+
+function showCombo(text, kind) {
+  const b = $("#comboBanner");
+  if (!b) return;
+  b.textContent = text;
+  b.className = "combo-banner " + (kind || "");
+  void b.offsetWidth;
+  b.classList.add("show");
+  const dur = kind === "milestone" ? 2200 : kind === "broken" ? 1600 : 1400;
+  setTimeout(() => b.classList.remove("show"), dur);
+}
+
+function flashScreen(color) {
+  const f = $("#flash");
+  if (!f) return;
+  f.style.background = color || "rgba(255,255,255,0.7)";
+  f.classList.remove("go");
+  void f.offsetWidth;
+  f.classList.add("go");
+}
+
+function shockwave() {
+  const layer = $("#particles");
+  if (!layer) return;
+  const w = document.createElement("div");
+  w.className = "shockwave";
+  w.style.left = (window.innerWidth / 2) + "px";
+  w.style.top = (window.innerHeight / 2) + "px";
+  layer.appendChild(w);
+  setTimeout(() => w.remove(), 1000);
 }
 
 function showEndModal(won, word, attempts) {
@@ -313,11 +386,13 @@ function init() {
   $("#endClose").addEventListener("click", closeEndModal);
   $("#endAgain").addEventListener("click", newGame);
   $("#resetWonBtn").addEventListener("click", resetWonConfirm);
+  $("#streakHud").addEventListener("click", openStats);
   document.addEventListener("click", (e) => {
     if (e.target.classList && e.target.classList.contains("modal-backdrop")) {
       e.target.parentElement.classList.remove("open");
     }
   });
+  updateStreakHud(window.MotusStats.getStats().currentStreak);
   startGame(parseInt($("#lengthSelect").value, 10));
 }
 
