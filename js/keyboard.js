@@ -28,7 +28,10 @@ function buildKeyboard(container) {
         btn.textContent = k;
         btn.dataset.key = k;
       }
-      btn.addEventListener("click", () => handleKey(btn.dataset.key));
+      btn.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        handleKey(btn.dataset.key);
+      });
       rowEl.appendChild(btn);
     }
     container.appendChild(rowEl);
@@ -75,6 +78,16 @@ function bindPhysicalKeyboard() {
     else if (e.key === "Backspace") { e.preventDefault(); handleKey("BACK"); }
     else if (/^[a-zA-Z]$/.test(e.key)) { handleKey(e.key.toUpperCase()); }
   });
+  preventDoubleTapZoom();
+}
+
+let _lastTouchEnd = 0;
+function preventDoubleTapZoom() {
+  document.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - _lastTouchEnd <= 300) e.preventDefault();
+    _lastTouchEnd = now;
+  }, { passive: false });
 }
 
 window.MotusKeyboard = { buildKeyboard, updateKeyColors, resetKeyColors, setEnterReady, bindPhysicalKeyboard };
