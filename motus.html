@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MOTUS - Jeu de mots</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <a class="back-link" href="index.html" aria-label="Retour au menu">&larr;</a>
+        <h1 class="title">MOTUS</h1>
+        <button id="streakHud" class="streak-hud" type="button" title="Serie de victoires en cours" aria-label="Serie de victoires">
+          <span class="flame" aria-hidden="true"></span>
+          <span class="streak-num"><span id="streakValue">0</span></span>
+        </button>
+      </div>
+      <div class="controls">
+        <select id="lengthSelect" class="btn" aria-label="Longueur du mot">
+          <option value="5">5 lettres</option>
+          <option value="6">6 lettres</option>
+          <option value="7" selected>7 lettres</option>
+          <option value="8">8 lettres</option>
+          <option value="9">9 lettres</option>
+        </select>
+        <button id="newGameBtn" class="btn primary" type="button">Nouvelle partie</button>
+        <button id="statsBtn" class="btn" type="button" aria-label="Statistiques">STATS</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="board"></div>
+      <div id="keyboard"></div>
+    </main>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="particles"></div>
+  <div id="comboBanner" class="combo-banner" aria-hidden="true"></div>
+  <div id="flash" class="flash-overlay" aria-hidden="true"></div>
+
+  <div id="statsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <button class="close-x" id="statsClose" type="button" aria-label="Fermer">X</button>
+      <h2 id="statsTitle">STATS</h2>
+      <div class="stats-grid">
+        <div class="stat-cell"><span class="v" id="stPlayed">0</span><span class="l">Parties</span></div>
+        <div class="stat-cell"><span class="v" id="stWon">0</span><span class="l">Victoires</span></div>
+        <div class="stat-cell"><span class="v" id="stRate">0%</span><span class="l">Reussite</span></div>
+        <div class="stat-cell"><span class="v" id="stStreak">0</span><span class="l">Serie</span></div>
+        <div class="stat-cell"><span class="v" id="stMax">0</span><span class="l">Serie max</span></div>
+      </div>
+      <h2 style="font-size:11px;margin-bottom:6px;">Essais gagnants</h2>
+      <div id="stDist"></div>
+      <h2 style="font-size:11px;margin:12px 0 6px;">Mots vaincus</h2>
+      <div id="stWords"></div>
+      <div class="stats-actions">
+        <button class="btn" id="resetWonBtn" type="button">Reset mots vus</button>
+        <button class="btn primary" id="statsCloseBottom" type="button" onclick="document.getElementById('statsModal').classList.remove('open')">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="endModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <button class="close-x" id="endClose" type="button" aria-label="Fermer">X</button>
+      <h2 id="endTitle">FIN</h2>
+      <p id="endSub"></p>
+      <div id="endWord"></div>
+      <div class="end-actions">
+        <button class="btn primary" id="endAgain" type="button">Rejouer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/words.js"></script>
+  <script src="js/dict.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
