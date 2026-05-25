@@ -1181,3 +1181,7 @@ body.on-fire::after {
   background: var(--neon-orange);
   box-shadow: 0 0 10px var(--neon-orange);
 }
+
+/* tuile Cartoondle */
+.hub-tile.cartoon .hub-emoji { color: var(--neon-orange); }
+.hub-tile.cartoon:hover { border-color: var(--neon-orange); box-shadow: 0 0 16px var(--neon-orange); }
