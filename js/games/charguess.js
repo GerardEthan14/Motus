@@ -137,6 +137,7 @@
       var v = e[attr.key];
       if (Array.isArray(v)) return v.length ? v.join(", ") : (attr.empty || "Aucun");
       if (v == null || v === "") return attr.empty || "Aucun";
+      if (attr.fmt) return attr.fmt(v);
       if (attr.kind === "numeric" && attr.unit) return v + attr.unit;
       return v;
     }
