@@ -236,10 +236,7 @@
         var img = cfg.imageUrl ? cfg.imageUrl(e) : null;
         item.innerHTML = (img ? '<img src="' + img + '" alt="" loading="lazy" />' : "") +
           "<span>" + e[cfg.nameKey] + "</span>";
-        item.addEventListener("pointerdown", function (ev) {
-          ev.preventDefault();
-          select(e);
-        });
+        item.dataset.idx = String(acItems.length);
         el.dropdown.appendChild(item);
         acItems.push(e);
       });
@@ -258,6 +255,13 @@
       void el.search.offsetWidth;
       el.search.classList.add("shake");
     }
+
+    el.dropdown.addEventListener("click", function (ev) {
+      const item = ev.target.closest(".cg-ac-item");
+      if (!item) return;
+      const idx = parseInt(item.dataset.idx, 10);
+      if (!isNaN(idx) && acItems[idx]) select(acItems[idx]);
+    });
 
     el.search.addEventListener("input", refreshDropdown);
     el.search.addEventListener("keydown", function (e) {
