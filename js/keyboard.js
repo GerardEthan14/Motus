@@ -63,6 +63,11 @@ function resetKeyColors() {
   });
 }
 
+function setEnterReady(ready) {
+  const btn = document.querySelector('.kb-key[data-key="ENTER"]');
+  if (btn) btn.classList.toggle("ready", ready);
+}
+
 function bindPhysicalKeyboard() {
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -72,4 +77,4 @@ function bindPhysicalKeyboard() {
   });
 }
 
-window.MotusKeyboard = { buildKeyboard, updateKeyColors, resetKeyColors, bindPhysicalKeyboard };
+window.MotusKeyboard = { buildKeyboard, updateKeyColors, resetKeyColors, setEnterReady, bindPhysicalKeyboard };

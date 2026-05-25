@@ -7,6 +7,7 @@ const state = {
   currentRow: 0,
   currentGuess: "",
   finished: false,
+  revealing: false,
   rows: []
 };
 
@@ -43,6 +44,7 @@ function startGame(length) {
   state.currentRow = 0;
   state.currentGuess = "";
   state.finished = false;
+  state.revealing = false;
   const pick = window.MotusWords.pickRandomWord(length);
   if (!pick) { toast("Aucun mot disponible."); return; }
   state.target = pick.word;
@@ -51,10 +53,11 @@ function startGame(length) {
   }
   buildBoard();
   window.MotusKeyboard.resetKeyColors();
+  updateEnterState();
 }
 
 function addLetter(ch) {
-  if (state.finished) return;
+  if (state.finished || state.revealing) return;
   if (state.currentGuess.length >= state.length) return;
   state.currentGuess += ch;
   paintCurrent();
@@ -65,7 +68,7 @@ function addLetter(ch) {
 }
 
 function removeLetter() {
-  if (state.finished) return;
+  if (state.finished || state.revealing) return;
   if (state.currentGuess.length === 0) return;
   state.currentGuess = state.currentGuess.slice(0, -1);
   paintCurrent();
@@ -77,6 +80,18 @@ function paintCurrent() {
     const ch = state.currentGuess[i] || "";
     tiles[i].textContent = ch;
     tiles[i].classList.toggle("filled", !!ch);
+  }
+  updateEnterState();
+}
+
+function updateEnterState() {
+  let ready = false;
+  if (!state.finished && !state.revealing && state.currentGuess.length === state.length) {
+    const guess = normalize(state.currentGuess);
+    ready = /^[A-Z]+$/.test(guess) && (!window.MotusDict || window.MotusDict.isValidGuess(guess));
+  }
+  if (window.MotusKeyboard && window.MotusKeyboard.setEnterReady) {
+    window.MotusKeyboard.setEnterReady(ready);
   }
 }
 
@@ -110,7 +125,7 @@ function evaluateGuess(guess, target) {
 }
 
 function submitGuess() {
-  if (state.finished) return;
+  if (state.finished || state.revealing) return;
   if (state.currentGuess.length !== state.length) {
     shakeRow();
     toast("Mot trop court !");
@@ -127,6 +142,8 @@ function submitGuess() {
     toast("Mot inconnu");
     return;
   }
+  state.revealing = true;
+  updateEnterState();
   const result = evaluateGuess(guess, state.target);
   const tiles = state.rows[state.currentRow].tiles;
   const letterStates = {};
@@ -151,12 +168,14 @@ function submitGuess() {
   setTimeout(() => {
     window.MotusKeyboard.updateKeyColors(letterStates);
     const won = result.every(r => r === "correct");
+    state.revealing = false;
     if (won) onWin();
     else if (state.currentRow >= MAX_ATTEMPTS - 1) onLose();
     else {
       state.currentRow += 1;
       state.currentGuess = "";
     }
+    updateEnterState();
   }, totalDelay);
 }
 
