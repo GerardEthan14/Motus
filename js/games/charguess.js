@@ -50,7 +50,8 @@
       mode: "daily",
       target: null,
       guesses: [],
-      solved: false
+      solved: false,
+      hard: readJSON("cg." + cfg.key + ".hard", false)
     };
 
     // ---------- UI ----------
@@ -58,6 +59,7 @@
       '<div class="cg-modes">' +
         '<button class="btn cg-mode-btn active" data-mode="daily" type="button">Du jour</button>' +
         '<button class="btn cg-mode-btn" data-mode="training" type="button">Entrainement</button>' +
+        '<button class="btn cg-diff-btn" type="button">Difficile : OFF</button>' +
         '<button class="btn cg-stats-btn" type="button" aria-label="Statistiques">STATS</button>' +
       '</div>' +
       '<div class="cg-status"><span class="cg-tries">0 essai</span><span class="cg-hint"></span></div>' +
@@ -76,6 +78,7 @@
 
     const el = {
       modeBtns: mount.querySelectorAll(".cg-mode-btn"),
+      diffBtn: mount.querySelector(".cg-diff-btn"),
       statsBtn: mount.querySelector(".cg-stats-btn"),
       tries: mount.querySelector(".cg-tries"),
       hint: mount.querySelector(".cg-hint"),
@@ -116,7 +119,7 @@
       const tv = target[attr.key];
       if (attr.kind === "numeric") {
         if (gv === tv) return { state: "correct" };
-        return { state: "absent", arrow: tv > gv ? "up" : "down" };
+        return { state: "absent", arrow: state.hard ? null : (tv > gv ? "up" : "down") };
       }
       if (attr.kind === "set") {
         const ga = Array.isArray(gv) ? gv : (gv == null ? [] : [gv]);
@@ -124,12 +127,12 @@
         const tset = new Set(ta);
         const inter = ga.filter(function (x) { return tset.has(x); });
         if (inter.length === ga.length && ga.length === ta.length) return { state: "correct" };
-        if (inter.length > 0) return { state: "present" };
+        if (inter.length > 0) return { state: state.hard ? "absent" : "present" };
         return { state: "absent" };
       }
       // exact (possibly grouped)
       if (gv === tv) return { state: "correct" };
-      if (attr.group && gv != null && groupSet(target, attr.group).has(gv)) return { state: "present" };
+      if (attr.group && gv != null && groupSet(target, attr.group).has(gv)) return { state: state.hard ? "absent" : "present" };
       return { state: "absent" };
     }
 
@@ -404,6 +407,17 @@
         if (b.dataset.mode === "daily") startDaily(); else startTraining();
       });
     });
+    function updateDiffBtn() {
+      el.diffBtn.textContent = "Difficile : " + (state.hard ? "ON" : "OFF");
+      el.diffBtn.classList.toggle("active", state.hard);
+    }
+    el.diffBtn.addEventListener("click", function () {
+      state.hard = !state.hard;
+      writeJSON("cg." + cfg.key + ".hard", state.hard);
+      updateDiffBtn();
+      renderAll();
+    });
+    updateDiffBtn();
     el.statsBtn.addEventListener("click", showStats);
     el.again.addEventListener("click", function () {
       if (state.mode === "training") startTraining(); else el.modal.hidden = true;

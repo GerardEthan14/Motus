@@ -1,0 +1,12 @@
+[
+  { "championName": "Ambessa", "gender": "Female", "positions": ["Top", "Jungle"], "species": ["Human"], "regions": ["Noxus"], "resource": "Mana", "range_type": ["Melee"], "release_date": "2024-11-21" },
+  { "championName": "Aurora", "gender": "Female", "positions": ["Middle", "Top"], "species": ["Vastayan"], "regions": ["Freljord"], "resource": "Mana", "range_type": ["Ranged"], "release_date": "2024-07-30" },
+  { "championName": "Briar", "gender": "Female", "positions": ["Jungle"], "species": ["Chemically Altered"], "regions": ["Noxus"], "resource": "Manaless", "range_type": ["Melee"], "release_date": "2023-09-14" },
+  { "championName": "Hwei", "gender": "Male", "positions": ["Middle", "Support"], "species": ["Human"], "regions": ["Ionia"], "resource": "Mana", "range_type": ["Ranged"], "release_date": "2023-12-06" },
+  { "championName": "Mel", "gender": "Female", "positions": ["Middle", "Support"], "species": ["Human"], "regions": ["Noxus"], "resource": "Mana", "range_type": ["Ranged"], "release_date": "2025-04-02" },
+  { "championName": "Milio", "gender": "Male", "positions": ["Support"], "species": ["Human"], "regions": ["Ixtal"], "resource": "Mana", "range_type": ["Ranged"], "release_date": "2023-03-22" },
+  { "championName": "Naafiri", "gender": "Female", "positions": ["Middle", "Jungle"], "species": ["Darkin"], "regions": ["Shurima"], "resource": "Mana", "range_type": ["Melee"], "release_date": "2023-07-20" },
+  { "championName": "Smolder", "gender": "Male", "positions": ["Bottom"], "species": ["Dragon"], "regions": ["Camavor"], "resource": "Mana", "range_type": ["Ranged"], "release_date": "2024-01-31" },
+  { "championName": "Yunara", "gender": "Female", "positions": ["Bottom"], "species": ["Human"], "regions": ["Ionia"], "resource": "Mana", "range_type": ["Ranged"], "release_date": "2025-07-01" },
+  { "championName": "Zaahen", "gender": "Male", "positions": ["Support"], "species": ["Darkin"], "regions": ["Icathia"], "resource": "Mana", "range_type": ["Melee"], "release_date": "2026-01-01" }
+]

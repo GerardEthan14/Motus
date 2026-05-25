@@ -1173,3 +1173,11 @@ body.on-fire::after {
 .mg-skin:active { transform: scale(0.96); }
 .mg-skin.correct { background: var(--neon-green); color: #021000; border-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
 .mg-skin.wrong { background: #c0392b; color: #fff; border-color: #c0392b; opacity: 0.55; text-decoration: line-through; }
+
+/* bouton mode difficile */
+.cg-diff-btn.active {
+  border-color: var(--neon-orange);
+  color: #000;
+  background: var(--neon-orange);
+  box-shadow: 0 0 10px var(--neon-orange);
+}

@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  var IMG = "https://raw.githubusercontent.com/Owen1212055/mc-assets/main/entity-assets/flat/";
   fetch("data/minecraft.json")
     .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
     .then(function (list) {
@@ -12,6 +13,7 @@
         nameKey: "name",
         entityLabel: "Mob",
         searchKeys: ["name", "nameEn"],
+        imageUrl: function (m) { return IMG + m.img + ".png"; },
         attributes: [
           { key: "category", label: "Categorie", kind: "exact" },
           { key: "type", label: "Type", kind: "exact" },
