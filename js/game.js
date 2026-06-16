@@ -1,6 +1,9 @@
 const MAX_ATTEMPTS = 6;
 const FLIP_DELAY_MS = 220;
 
+const ENDLESS_LENGTHS = [5, 6, 7, 8, 9];
+const ENDLESS_TIMER_SECS = 60;
+
 const state = {
   length: 7,
   target: "",
@@ -8,8 +11,28 @@ const state = {
   currentGuess: "",
   finished: false,
   revealing: false,
-  rows: []
+  rows: [],
+  // endless
+  endless: false,
+  endLoop: 1,
+  endIdx: 0,
+  endStreak: 0,
+  timerEnd: 0,
+  timerId: 0
 };
+
+function endlessFlags(loop) {
+  return {
+    hideAttempts: loop >= 2,
+    timer: loop >= 3,
+    partial: loop >= 4,
+    attempts: loop >= 5 ? 5 : 6
+  };
+}
+
+function maxAttempts() {
+  return state.endless ? endlessFlags(state.endLoop).attempts : MAX_ATTEMPTS;
+}
 
 function $(sel) { return document.querySelector(sel); }
 
@@ -22,7 +45,8 @@ function buildBoard() {
   board.innerHTML = "";
   board.style.setProperty("--cols", state.length);
   state.rows = [];
-  for (let r = 0; r < MAX_ATTEMPTS; r++) {
+  const rowsCount = maxAttempts();
+  for (let r = 0; r < rowsCount; r++) {
     const row = document.createElement("div");
     row.className = "row";
     const tiles = [];
@@ -144,7 +168,10 @@ function submitGuess() {
   }
   state.revealing = true;
   updateEnterState();
-  const result = evaluateGuess(guess, state.target);
+  const rawResult = evaluateGuess(guess, state.target);
+  const won = rawResult.every(r => r === "correct");
+  const partial = state.endless && endlessFlags(state.endLoop).partial && !won;
+  const result = partial ? rawResult.map(r => r === "present" ? "absent" : r) : rawResult;
   const tiles = state.rows[state.currentRow].tiles;
   const letterStates = {};
   const RANK = { absent: 1, present: 2, correct: 3 };
@@ -167,11 +194,13 @@ function submitGuess() {
   const totalDelay = tiles.length * FLIP_DELAY_MS + 350;
   setTimeout(() => {
     window.MotusKeyboard.updateKeyColors(letterStates);
-    const won = result.every(r => r === "correct");
     state.revealing = false;
     if (won) onWin();
-    else if (state.currentRow >= MAX_ATTEMPTS - 1) onLose();
+    else if (state.currentRow >= maxAttempts() - 1) onLose();
     else {
+      if (state.endless && endlessFlags(state.endLoop).hideAttempts) {
+        state.rows[state.currentRow].el.classList.add("past-attempt");
+      }
       state.currentRow += 1;
       state.currentGuess = "";
     }
@@ -187,12 +216,14 @@ function stColor(st) {
 
 function onWin() {
   state.finished = true;
+  stopTimer();
   const rowTiles = state.rows[state.currentRow].tiles;
   rowTiles.forEach((t, i) => {
     setTimeout(() => t.classList.add("glow"), i * 80);
   });
   document.body.classList.add("victory");
   const attempts = state.currentRow + 1;
+  if (state.endless) return onWinEndless(attempts);
   const s = window.MotusStats.recordResult(true, attempts, state.target, state.length);
   const streak = s.currentStreak;
   updateStreakHud(streak, { pop: true });
@@ -217,21 +248,191 @@ function onWin() {
 
 function onLose() {
   state.finished = true;
-  const prevStreak = window.MotusStats.getStats().currentStreak;
+  stopTimer();
   document.body.classList.add("defeat");
   document.body.classList.remove("on-fire");
   const app = document.querySelector(".app");
   app.classList.add("screen-shake");
   setTimeout(() => app.classList.remove("screen-shake"), 700);
   flashScreen("rgba(255,40,60,0.6)");
+  if (state.endless) return onLoseEndless();
+  const prevStreak = window.MotusStats.getStats().currentStreak;
   window.MotusStats.recordResult(false, 0, state.target, state.length);
   updateStreakHud(0, { broke: prevStreak >= 1 });
   if (prevStreak >= 3) {
     showCombo("SERIE PERDUE !  x" + prevStreak, "broken");
   }
   setTimeout(() => {
-    showEndModal(false, state.target, MAX_ATTEMPTS);
+    showEndModal(false, state.target, maxAttempts());
   }, 900);
+}
+
+// ========== Mode sans fin ==========
+
+function toggleEndless() {
+  if (state.endless) exitEndless();
+  else enterEndless();
+}
+
+function enterEndless() {
+  state.endless = true;
+  state.endLoop = 1;
+  state.endIdx = 0;
+  state.endStreak = 0;
+  document.body.classList.add("endless");
+  document.body.classList.remove("victory", "defeat");
+  $("#endlessBtn").classList.add("active");
+  $("#endlessBtn").textContent = "QUITTER";
+  $("#newGameBtn").textContent = "Nouvelle run";
+  $("#lengthSelect").disabled = true;
+  $("#lengthSelect").style.display = "none";
+  $("#streakHud").style.display = "none";
+  $("#endlessHud").hidden = false;
+  closeEndModal();
+  startEndlessWord();
+}
+
+function exitEndless() {
+  state.endless = false;
+  stopTimer();
+  document.body.classList.remove("endless");
+  $("#endlessBtn").classList.remove("active");
+  $("#endlessBtn").textContent = "SANS FIN";
+  $("#newGameBtn").textContent = "Nouvelle partie";
+  $("#lengthSelect").disabled = false;
+  $("#lengthSelect").style.display = "";
+  $("#streakHud").style.display = "";
+  $("#endlessHud").hidden = true;
+  closeEndModal();
+  startGame(parseInt($("#lengthSelect").value, 10));
+}
+
+function startEndlessWord() {
+  state.length = ENDLESS_LENGTHS[state.endIdx];
+  state.currentRow = 0;
+  state.currentGuess = "";
+  state.finished = false;
+  state.revealing = false;
+  const pick = window.MotusWords.pickRandomWord(state.length);
+  if (!pick) { toast("Aucun mot disponible."); return; }
+  state.target = pick.word;
+  buildBoard();
+  window.MotusKeyboard.resetKeyColors();
+  document.body.classList.remove("victory", "defeat");
+  updateEnterState();
+  updateEndlessHud();
+  const flags = endlessFlags(state.endLoop);
+  if (flags.timer) startTimer(ENDLESS_TIMER_SECS);
+}
+
+function updateEndlessHud() {
+  $("#ehStreak").textContent = state.endStreak;
+  $("#ehLoop").textContent = state.endLoop;
+  $("#ehLength").textContent = state.length;
+  const flags = endlessFlags(state.endLoop);
+  $("#ehTimerCell").hidden = !flags.timer;
+}
+
+function startTimer(secs) {
+  stopTimer();
+  state.timerEnd = Date.now() + secs * 1000;
+  tickTimer();
+  state.timerId = setInterval(tickTimer, 200);
+}
+function stopTimer() {
+  if (state.timerId) { clearInterval(state.timerId); state.timerId = 0; }
+}
+function tickTimer() {
+  const remain = Math.max(0, state.timerEnd - Date.now());
+  const s = Math.ceil(remain / 1000);
+  const el = $("#ehTimer");
+  if (el) {
+    el.textContent = s;
+    el.classList.toggle("warn", s <= 10);
+    el.classList.toggle("crit", s <= 5);
+  }
+  if (remain <= 0 && !state.finished && !state.revealing) {
+    stopTimer();
+    toast("Temps ecoule !");
+    onLose();
+  }
+}
+
+function effectTier(attempts, streak) {
+  let t = 0;
+  if (attempts === 1) t += 3;
+  else if (attempts === 2) t += 2;
+  else if (attempts <= 4) t += 1;
+  if (streak >= 25) t += 3;
+  else if (streak >= 10) t += 2;
+  else if (streak >= 5) t += 1;
+  return Math.min(t, 5);
+}
+
+const TIER_DELAY_MS = [900, 1100, 1300, 1500, 1800, 2200];
+const TIER_LABELS = ["", "Bien !", "Super !", "Excellent !", "Incroyable !", "LEGENDAIRE !"];
+
+function triggerWinEffects(tier, streak) {
+  const particles = 40 + tier * 50;
+  burstParticles(particles);
+  if (tier >= 1) {
+    const kind = tier >= 4 ? "milestone" : "";
+    showCombo(TIER_LABELS[tier] + (streak >= 2 ? "   x" + streak : ""), kind);
+  }
+  if (tier >= 2) shockwave();
+  if (tier >= 3) {
+    flashScreen("rgba(255,247,0,0.55)");
+    const app = document.querySelector(".app");
+    app.classList.add("screen-shake");
+    setTimeout(() => app.classList.remove("screen-shake"), 600);
+  }
+  if (tier >= 4) {
+    setTimeout(() => burstParticles(120), 200);
+    setTimeout(() => shockwave(), 350);
+  }
+  if (tier >= 5) {
+    flashScreen("rgba(255,106,0,0.85)");
+    document.body.classList.add("legendary");
+    setTimeout(() => document.body.classList.remove("legendary"), 1600);
+  }
+}
+
+function onWinEndless(attempts) {
+  state.endStreak += 1;
+  const tier = effectTier(attempts, state.endStreak);
+  triggerWinEffects(tier, state.endStreak);
+  // advance
+  state.endIdx += 1;
+  if (state.endIdx >= ENDLESS_LENGTHS.length) {
+    state.endIdx = 0;
+    state.endLoop += 1;
+  }
+  const delay = TIER_DELAY_MS[tier];
+  setTimeout(() => {
+    if (state.endless) startEndlessWord();
+  }, delay);
+}
+
+function onLoseEndless() {
+  const finalStreak = state.endStreak;
+  const finalLoop = state.endLoop;
+  const finalLen = state.length;
+  state.endStreak = 0;
+  state.endLoop = 1;
+  state.endIdx = 0;
+  updateEndlessHud();
+  setTimeout(() => {
+    showEndlessRunModal(finalStreak, finalLoop, finalLen, state.target);
+  }, 900);
+}
+
+function showEndlessRunModal(streak, loop, len, word) {
+  const modal = $("#endModal");
+  $("#endTitle").textContent = "RUN TERMINEE";
+  $("#endSub").innerHTML = "Mots resolus : <b>" + streak + "</b><br>Tour atteint : <b>" + loop + "</b><br>Longueur : <b>" + len + "</b><br><br>Le mot etait :";
+  $("#endWord").textContent = word;
+  modal.classList.remove("won");
+  modal.classList.add("open");
 }
 
 function updateStreakHud(value, opts) {
@@ -302,6 +503,13 @@ function closeEndModal() {
 
 function newGame() {
   closeEndModal();
+  if (state.endless) {
+    state.endLoop = 1;
+    state.endIdx = 0;
+    state.endStreak = 0;
+    startEndlessWord();
+    return;
+  }
   const length = parseInt(document.querySelector("#lengthSelect").value, 10);
   startGame(length);
 }
@@ -400,6 +608,7 @@ function init() {
   window.MotusKeyboard.bindPhysicalKeyboard();
   $("#newGameBtn").addEventListener("click", newGame);
   $("#lengthSelect").addEventListener("change", newGame);
+  $("#endlessBtn").addEventListener("click", toggleEndless);
   $("#statsBtn").addEventListener("click", openStats);
   $("#statsClose").addEventListener("click", closeStats);
   $("#endClose").addEventListener("click", closeEndModal);

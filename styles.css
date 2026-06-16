@@ -1185,3 +1185,67 @@ body.on-fire::after {
 /* tuile Cartoondle */
 .hub-tile.cartoon .hub-emoji { color: var(--neon-orange); }
 .hub-tile.cartoon:hover { border-color: var(--neon-orange); box-shadow: 0 0 16px var(--neon-orange); }
+
+/* ===================== Motus mode sans fin ===================== */
+#endlessBtn.active {
+  border-color: var(--neon-pink);
+  color: #000;
+  background: var(--neon-pink);
+  box-shadow: 0 0 10px var(--neon-pink);
+}
+
+.endless-hud {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 6px auto 14px;
+  width: var(--play-w);
+  flex-wrap: wrap;
+}
+.eh-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border: 3px solid var(--border);
+  min-width: 64px;
+}
+.eh-l {
+  font-size: 7px;
+  color: var(--neon-blue);
+  letter-spacing: 1px;
+}
+.eh-v {
+  font-size: 14px;
+  color: var(--ink);
+}
+.eh-cell.timer .eh-v.warn { color: var(--neon-yellow); }
+.eh-cell.timer .eh-v.crit {
+  color: #ff3a3a;
+  animation: timer-crit 600ms ease-in-out infinite alternate;
+}
+@keyframes timer-crit {
+  from { transform: scale(1); }
+  to   { transform: scale(1.18); text-shadow: 0 0 8px #ff3a3a; }
+}
+
+/* essais masques au tour 2+ */
+.row.past-attempt {
+  opacity: 0.05;
+  filter: blur(3px);
+  transition: opacity 400ms, filter 400ms;
+  pointer-events: none;
+}
+/* effet legendaire (tier 5) */
+body.legendary {
+  animation: legendary-pulse 800ms ease-in-out;
+}
+@keyframes legendary-pulse {
+  0%, 100% { background: var(--bg); }
+  50% { background: #2a1500; }
+}
+body.legendary h1.title {
+  animation: rainbow 0.4s linear infinite, flicker 3s infinite;
+}

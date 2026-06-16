@@ -28,10 +28,18 @@
           <option value="8">8 lettres</option>
           <option value="9">9 lettres</option>
         </select>
+        <button id="endlessBtn" class="btn" type="button" title="Mode sans fin">SANS FIN</button>
         <button id="newGameBtn" class="btn primary" type="button">Nouvelle partie</button>
         <button id="statsBtn" class="btn" type="button" aria-label="Statistiques">STATS</button>
       </div>
     </header>
+
+    <div id="endlessHud" class="endless-hud" hidden>
+      <span class="eh-cell"><span class="eh-l">Mots</span><span id="ehStreak" class="eh-v">0</span></span>
+      <span class="eh-cell"><span class="eh-l">Tour</span><span id="ehLoop" class="eh-v">1</span></span>
+      <span class="eh-cell"><span class="eh-l">Lettres</span><span id="ehLength" class="eh-v">5</span></span>
+      <span class="eh-cell timer" id="ehTimerCell" hidden><span class="eh-l">Temps</span><span id="ehTimer" class="eh-v">60</span></span>
+    </div>
 
     <main>
       <div id="board"></div>
